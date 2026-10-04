@@ -1,0 +1,7 @@
+# Copy to .dev.vars for the local preview (node scripts/dev.mjs). Never commit .dev.vars.
+# With a real GITHUB_TOKEN, the local admin view edits the real repository.
+ADMIN_USERNAME=ammara
+ADMIN_PASSWORD=change-me
+SESSION_SECRET=any-long-random-string
+GITHUB_TOKEN=github_pat_xxx
+GITHUB_REPO=fortyTwo102/portfolio

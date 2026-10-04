@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_macros.html" import entries, contact_buttons %}
+{% block title %}{{ site.name }}, {{ focus.title|lower }}{% endblock %}
+{% block description %}{{ focus.intro|truncate(155, end='…') if focus.intro else site.intro|truncate(155, end='…') }}{% endblock %}
+{% block main %}
+<header class="page-head focus-head">
+  <h1><span class="focus-name">{{ site.name }}</span> <span class="focus-role">{{ focus.title }}</span></h1>
+  {% if focus.intro %}<div class="lede">{{ focus.intro|markdown|safe }}</div>{% endif %}
+</header>
+
+<div class="focus-body">
+  {% if focus.highlights %}
+  <ul class="highlights">
+    {% for h in focus.highlights %}<li>{{ h }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {{ contact_buttons(focus.cv or site.cv) }}
+</div>
+
+<section class="block">
+  <h2 class="block-title">Samples</h2>
+  {% if pinned %}
+  {{ entries(pinned) }}
+  {% else %}
+  <p class="empty">Samples for this role are being added. <a href="mailto:{{ site.email }}">Email Ammara</a> and she'll send some directly.</p>
+  {% endif %}
+</section>
+
+{% if more %}
+<section class="block">
+  <h2 class="block-title">More work</h2>
+  {{ entries(more) }}
+</section>
+{% endif %}
+
+{% if jobs %}
+<section class="block">
+  <h2 class="block-title">Experience</h2>
+  <ol class="cv-list">
+    {% for j in jobs %}
+    <li>
+      <span class="cv-dates">{{ j.dates }}</span>
+      <span class="cv-role">{{ j.title }}, {{ j.company }}</span>
+    </li>
+    {% endfor %}
+  </ol>
+  <p class="more-link"><a href="/about/#experience">Full experience</a></p>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{% set page_title %}{% block title %}{{ site.name }}, {{ site.headline|lower }}{% endblock %}{% endset %}
+{% set page_description %}{% block description %}{{ site.intro|truncate(155, end='…') }}{% endblock %}{% endset %}
+<title>{{ page_title|trim }}</title>
+<meta name="description" content="{{ page_description|trim }}">
+<link rel="canonical" href="{{ site_url }}{{ path if path.endswith('/') else '/' }}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{ site.name }}">
+<meta property="og:title" content="{{ page_title|trim }}">
+<meta property="og:description" content="{{ page_description|trim }}">
+<meta property="og:url" content="{{ site_url }}{{ path if path.endswith('/') else '/' }}">
+<meta name="twitter:card" content="summary">
+{% block meta %}{% endblock %}
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600&family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap">
+<link rel="stylesheet" href="/assets/site.css?v={{ asset_version }}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<a class="skip" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="brand" href="/">{{ site.name }}</a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="/#work"{% if path == '/' %} aria-current="page"{% endif %}>Work</a></li>
+        <li><a href="/about/"{% if path == '/about/' %} aria-current="page"{% endif %}>About</a></li>
+        <li><a href="/search/"{% if path == '/search/' %} aria-current="page"{% endif %}>Search</a></li>
+        {% if site.email %}<li><a href="mailto:{{ site.email }}">Contact</a></li>{% endif %}
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+{% block main %}{% endblock %}
+</main>
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <p class="footer-name">{{ site.name }}</p>
+    {% if site.location %}<p class="footer-loc">{{ site.location }}</p>{% endif %}
+    <ul class="footer-links">
+      {% if site.email %}<li><a href="mailto:{{ site.email }}">{{ site.email }}</a></li>{% endif %}
+      {% if site.linkedin %}<li><a href="{{ site.linkedin }}" rel="me">LinkedIn</a></li>{% endif %}
+      {% if site.cv %}<li><a href="{{ site.cv }}" download>Download CV</a></li>{% endif %}
+    </ul>
+  </div>
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "_macros.html" import entries %}
+{% block title %}{{ piece.title }}: {{ site.name }}{% endblock %}
+{% block description %}{{ piece.summary or (piece.type ~ (' for ' ~ piece.company if piece.company else '') ~ ' by ' ~ site.name) }}{% endblock %}
+{% block meta %}{% if piece.visibility == 'unlisted' %}<meta name="robots" content="noindex">{% endif %}{% endblock %}
+{% block main %}
+<article class="piece"{% if piece.visibility == 'public' %} data-search-body{% endif %}>
+  <header class="piece-head">
+    {% if section %}<p class="crumb"><a href="{{ section.url }}">{{ section.title }}</a></p>{% endif %}
+    <h1>{{ piece.title }}</h1>
+    {% if piece.summary %}<p class="lede">{{ piece.summary }}</p>{% endif %}
+  </header>
+
+  <div class="piece-body">
+    <aside class="specimen" aria-label="About this piece">
+      <dl>
+        {% if piece.type %}<div><dt>Type</dt><dd>{{ piece.type }}</dd></div>{% endif %}
+        {% if piece.company %}<div><dt>For</dt><dd>{{ piece.company }}</dd></div>{% endif %}
+        {% if piece.role %}<div><dt>Role</dt><dd>{{ piece.role }}</dd></div>{% endif %}
+        {% if piece.dateLabel %}<div><dt>Date</dt><dd>{{ piece.dateLabel }}</dd></div>{% endif %}
+        {% if piece.brief %}<div class="wide"><dt>Brief</dt><dd>{{ piece.brief }}</dd></div>{% endif %}
+        {% if piece.result %}<div class="wide"><dt>Result</dt><dd>{{ piece.result }}</dd></div>{% endif %}
+        {% if piece.tags %}<div class="wide"><dt>Skills</dt><dd>{{ piece.tags|join(', ') }}</dd></div>{% endif %}
+      </dl>
+      {% set live = piece.parts|selectattr('kind', 'equalto', 'link')|list %}
+      {% set files = piece.parts|selectattr('file')|map(attribute='file')|list %}
+      {% if live or files %}
+      <ul class="specimen-actions">
+        {% for l in live %}<li><a href="{{ l.url }}">Read it on {{ l.site }}</a></li>{% endfor %}
+        {% for f in files %}<li><a href="{{ f.url }}" download>Download the {{ f.kindLabel if f.kind in ('pdf','docx') else f.kindLabel|lower }}</a>{% if f.size %} <span class="muted">({{ f.size }})</span>{% endif %}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </aside>
+
+    <div class="piece-content">
+      {% for part in piece.parts %}
+        {% if part.kind == 'link' %}
+        <div class="linkcard">
+          <a class="linkcard-main" href="{{ part.url }}">
+            {% if part.image %}<img class="linkcard-img" src="{{ part.image }}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">{% endif %}
+            <span class="linkcard-text">
+              <span class="linkcard-site">{{ part.site }}</span>
+              <span class="linkcard-title">{{ part.title }}</span>
+              {% if part.description %}<span class="linkcard-desc">{{ part.description }}</span>{% endif %}
+            </span>
+          </a>
+          {% if part.archive %}<p class="linkcard-archive">If the page has moved, read the <a href="{{ part.archive }}">archived copy</a>.</p>{% endif %}
+        </div>
+        {% elif part.kind == 'html' %}
+        <div class="prose{% if part.poem %} poem{% endif %}">
+          {{ part.html|safe }}
+        </div>
+        {% elif part.kind == 'pdf' %}
+        <figure class="doc">
+          <div class="doc-pages">
+            {% for pg in part.pages %}
+            <img src="{{ pg.src }}" width="{{ pg.w }}" height="{{ pg.h }}" alt="Page {{ loop.index }} of {{ part.file.name }}" loading="{{ 'eager' if loop.first else 'lazy' }}" decoding="async">
+            {% endfor %}
+          </div>
+          <figcaption>
+            {{ part.file.name }}, {{ part.pageCount }} {{ 'page' if part.pageCount == 1 else 'pages' }}.
+            {% if part.truncated %}Showing the first {{ part.pages|length }}.{% endif %}
+            <a href="{{ part.file.url }}">Open the PDF</a>
+          </figcaption>
+          {% if part.text %}
+          <details class="doc-text">
+            <summary>Read as text</summary>
+            <div class="plain">{{ part.text }}</div>
+          </details>
+          {% endif %}
+        </figure>
+        {% elif part.kind == 'download' %}
+        <p class="download-only"><a href="{{ part.file.url }}" download>Download {{ part.file.name }}</a>{% if part.file.size %} <span class="muted">({{ part.file.size }})</span>{% endif %}</p>
+        {% endif %}
+      {% endfor %}
+      {% if not piece.parts %}
+      <p class="empty">This piece has no content yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</article>
+
+{% if related %}
+<section class="block">
+  <h2 class="block-title">More {{ section.title|lower }}</h2>
+  {{ entries(related) }}
+</section>
+{% endif %}
+{% endblock %}

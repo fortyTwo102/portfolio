@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Page not found: {{ site.name }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block main %}
+<header class="page-head">
+  <h1>This page isn't here</h1>
+  <p class="lede">The link may be old, or the piece may have moved. Try the <a href="/#work">selected work</a> or <a href="/search/">search</a>.</p>
+</header>
+{% endblock %}

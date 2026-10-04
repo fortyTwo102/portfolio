@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Log in: portfolio admin</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600&family=Spectral:wght@300;400&display=swap">
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="login-page">
+<main class="login">
+  <h1>Portfolio admin</h1>
+  <p class="login-sub">Log in to add and edit work on Ammara's portfolio.</p>
+  <form id="login" novalidate>
+    <label class="field">
+      <span class="field-label">Username</span>
+      <input name="username" autocomplete="username" required autocapitalize="none" spellcheck="false">
+    </label>
+    <label class="field">
+      <span class="field-label">Password</span>
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <label class="field">
+      <span class="field-label">Your name</span>
+      <span class="field-hint">Shown in the change history so you can tell who edited what.</span>
+      <input name="name" autocomplete="name" placeholder="Farooq or Ammara">
+    </label>
+    <p class="form-error" id="error" role="alert" hidden></p>
+    <button class="btn btn-primary" type="submit">Log in</button>
+  </form>
+  <p class="login-foot"><a href="/">Back to the site</a></p>
+</main>
+<script src="/admin/login.js" type="module"></script>
+</body>
+</html>

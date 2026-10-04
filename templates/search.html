@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Search: {{ site.name }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block main %}
+<header class="page-head">
+  <h1>Search</h1>
+</header>
+<form class="search-form" role="search" data-search>
+  <label for="q">Search every piece by title, client, type or words in the text</label>
+  <input id="q" name="q" type="search" autocomplete="off" placeholder="For example: city guide, press release, Tripshepherd">
+</form>
+<p class="filter-count" aria-live="polite" data-search-status></p>
+<ol class="entries" data-search-results></ol>
+<noscript><p class="empty">Search needs JavaScript. Browse by kind from the <a href="/#work">home page</a> instead.</p></noscript>
+{% endblock %}
+{% block scripts %}<script src="/assets/search.js?v={{ asset_version }}" defer></script>{% endblock %}

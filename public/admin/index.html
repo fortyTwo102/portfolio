@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Portfolio admin</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600&family=Spectral:wght@300;400&display=swap">
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="topbar-title" href="/admin/">Portfolio admin</a>
+  <div class="publish" id="publish" aria-live="polite"></div>
+  <div class="topbar-user">
+    <a href="/" target="_blank" rel="noopener">View site</a>
+    <span id="who"></span>
+    <button class="linkish" id="logout" type="button">Log out</button>
+  </div>
+</header>
+<nav class="tabs" aria-label="Admin sections">
+  <a href="#/pieces" data-tab="pieces">Pieces</a>
+  <a href="#/sections" data-tab="sections">Sections</a>
+  <a href="#/roles" data-tab="roles">Role pages</a>
+  <a href="#/jobs" data-tab="jobs">Jobs</a>
+  <a href="#/profile" data-tab="profile">Profile</a>
+</nav>
+<main id="view" class="view"><p class="loading">Loading the site's content…</p></main>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script src="/admin/app.js" type="module"></script>
+</body>
+</html>

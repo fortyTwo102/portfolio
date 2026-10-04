@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "_macros.html" import contact_buttons %}
+{% block title %}About {{ site.name }}{% endblock %}
+{% block meta %}
+<script type="application/ld+json">{{ {
+  "@context": "https://schema.org", "@type": "Person", "name": site.name, "jobTitle": site.headline,
+  "url": site_url + "/about/", "sameAs": [site.linkedin] if site.linkedin else []
+}|tojson }}</script>
+{% endblock %}
+{% block main %}
+<header class="page-head">
+  <h1>About</h1>
+</header>
+
+<div class="about-intro">
+  {% if site.photo %}<img class="portrait" src="{{ site.photo }}" alt="Portrait of {{ site.name }}" width="320" height="400">{% endif %}
+  <div class="prose">{{ site.about|markdown|safe }}</div>
+</div>
+{{ contact_buttons(site.cv) }}
+
+{% if jobs %}
+<section class="block" id="experience">
+  <h2 class="block-title">Experience</h2>
+  <ol class="timeline">
+    {% for j in jobs %}
+    <li>
+      <div class="timeline-meta">
+        <span>{{ j.dates }}</span>
+        {% if j.type %}<span>{{ j.type }}</span>{% endif %}
+        {% if j.location %}<span>{{ j.location }}</span>{% endif %}
+      </div>
+      <div class="timeline-main">
+        <h3>{{ j.title }}</h3>
+        <p class="timeline-company">{{ j.company }}</p>
+        {% if j.highlights %}<ul>{% for h in j.highlights %}<li>{{ h }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+{% if site.skills %}
+<section class="block">
+  <h2 class="block-title">Skills and tools</h2>
+  <p class="skills">{{ site.skills|join(', ') }}.</p>
+</section>
+{% endif %}
+
+{% if site.education %}
+<section class="block">
+  <h2 class="block-title">Education</h2>
+  <ol class="cv-list">
+    {% for e in site.education %}
+    <li><span class="cv-dates">{{ e.years }}</span><span class="cv-role">{{ e.degree }}, {{ e.school }}</span></li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+{% if site.publications or site.honours or site.alsoPublishedIn %}
+<section class="block" id="poetry">
+  <h2 class="block-title">Poetry</h2>
+  {% if site.publications %}
+  <ul class="pubs">
+    {% for pub in site.publications %}
+    <li>
+      <span class="pub-title">{% if pub.url %}<a href="{{ pub.url }}">{{ pub.title }}</a>{% else %}{{ pub.title }}{% endif %}</span>
+      <span class="pub-venue">{{ pub.venue }}{% if pub.date %}, {{ pub.date }}{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if site.alsoPublishedIn %}<p class="also">Also published in {{ site.alsoPublishedIn }}</p>{% endif %}
+  {% if site.honours %}
+  <h3 class="minor">Honours</h3>
+  <ul class="honours">
+    {% for h in site.honours %}<li>{{ h.title }}{% if h.year %} ({{ h.year }}){% endif %}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% if site.poetryNote %}<p class="also">{{ site.poetryNote }}</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

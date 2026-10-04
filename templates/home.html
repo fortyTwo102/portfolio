@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% from "_macros.html" import entries, contact_buttons %}
+{% block body_class %}home{% endblock %}
+{% block meta %}
+<script type="application/ld+json">{{ {
+  "@context": "https://schema.org", "@type": "Person", "name": site.name, "jobTitle": site.headline,
+  "url": site_url + "/", "email": ("mailto:" ~ site.email) if site.email else None,
+  "sameAs": [site.linkedin] if site.linkedin else []
+}|tojson }}</script>
+{% endblock %}
+{% block main %}
+<section class="hero">
+  <h1 class="hero-name">{{ site.name }}</h1>
+  {% if site.headline %}<p class="hero-role">{{ site.headline }}</p>{% endif %}
+  <div class="hero-body">
+    <div class="hero-intro">
+      {% if site.intro %}<p>{{ site.intro }}</p>{% endif %}
+      {% if site.location %}<p class="hero-loc">{{ site.location }}</p>{% endif %}
+      {{ contact_buttons(site.cv) }}
+    </div>
+    {% if site.results %}
+    <div class="hero-results">
+      <h2 class="minor">Results</h2>
+      <ul>
+        {% for r in site.results %}<li>{{ r }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section id="work" class="block">
+  <h2 class="block-title">Selected work</h2>
+  {% if featured %}
+  {{ entries(featured) }}
+  {% else %}
+  <p class="empty">Work samples are being added. In the meantime, <a href="mailto:{{ site.email }}">email Ammara</a> for samples.</p>
+  {% endif %}
+</section>
+
+{% if nav_sections %}
+<section class="block">
+  <h2 class="block-title">All writing, by kind</h2>
+  <ul class="shelf">
+    {% for s in nav_sections %}
+    <li>
+      <a class="shelf-title" href="{{ s.url }}">{{ s.title }}</a>
+      <span class="shelf-count">{{ s.pieces|length }} {{ 'piece' if s.pieces|length == 1 else 'pieces' }}</span>
+      {% if s.description %}<p class="shelf-desc">{{ s.description }}</p>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if focus_pages %}
+<section class="block">
+  <h2 class="block-title">Samples for the role you're hiring</h2>
+  <ul class="roles">
+    {% for f in focus_pages %}<li><a href="{{ f.url }}">{{ f.title }}</a></li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if site.publications or site.honours %}
+<section class="block poetry-block">
+  <h2 class="block-title">Poetry</h2>
+  <div class="poetry-cols">
+    {% if site.publications %}
+    <ul class="pubs">
+      {% for pub in site.publications %}
+      <li>
+        <span class="pub-title">{% if pub.url %}<a href="{{ pub.url }}">{{ pub.title }}</a>{% else %}{{ pub.title }}{% endif %}</span>
+        <span class="pub-venue">{{ pub.venue }}{% if pub.date %}, {{ pub.date }}{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if site.honours %}
+    <ul class="honours">
+      {% for h in site.honours[:4] %}<li>{{ h.title }}{% if h.year %} ({{ h.year }}){% endif %}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  <p class="more-link"><a href="/about/#poetry">Publications and honours</a>{% if sections.poetry and sections.poetry.pieces %} or <a href="{{ sections.poetry.url }}">read the poems</a>{% endif %}</p>
+</section>
+{% endif %}
+{% endblock %}

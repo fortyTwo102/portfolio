@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import entries %}
+{% block title %}{{ section.title }}: {{ site.name }}{% endblock %}
+{% block description %}{{ section.description or (section.title ~ ' by ' ~ site.name) }}{% endblock %}
+{% block main %}
+<header class="page-head">
+  <h1>{{ section.title }}</h1>
+  {% if section.description %}<p class="lede">{{ section.description }}</p>{% endif %}
+</header>
+
+{% if show_filters %}
+<form class="filters" data-filters aria-label="Filter {{ section.title|lower }}">
+  {% if filters.company|length > 1 %}
+  <label>Company
+    <select name="company"><option value="">All</option>{% for v in filters.company %}<option>{{ v }}</option>{% endfor %}</select>
+  </label>
+  {% endif %}
+  {% if filters.type|length > 1 %}
+  <label>Type
+    <select name="type"><option value="">All</option>{% for v in filters.type %}<option>{{ v }}</option>{% endfor %}</select>
+  </label>
+  {% endif %}
+  {% if filters.year|length > 1 %}
+  <label>Year
+    <select name="year"><option value="">All</option>{% for v in filters.year %}<option>{{ v }}</option>{% endfor %}</select>
+  </label>
+  {% endif %}
+  <p class="filter-count" aria-live="polite" data-count>{{ section.pieces|length }} pieces</p>
+</form>
+{% endif %}
+
+{{ entries(section.pieces, id='list') }}
+<p class="empty" data-empty hidden>Nothing matches those filters. <a href="{{ section.url }}">Show all {{ section.title|lower }}</a>.</p>
+{% endblock %}
+{% block scripts %}{% if show_filters %}<script src="/assets/filters.js?v={{ asset_version }}" defer></script>{% endif %}{% endblock %}

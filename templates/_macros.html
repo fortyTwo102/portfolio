@@ -1,0 +1,27 @@
+{% macro entry(p) %}
+<li class="entry" data-company="{{ p.company }}" data-type="{{ p.type }}" data-year="{{ p.year }}">
+  <div class="entry-meta">
+    {% if p.type %}<span>{{ p.type }}</span>{% endif %}
+    {% if p.company %}<span>{{ p.company }}</span>{% endif %}
+    {% if p.dateLabel %}<span>{{ p.dateLabel }}</span>{% endif %}
+  </div>
+  <div class="entry-main">
+    <h3 class="entry-title"><a href="{{ p.url }}">{{ p.title }}</a></h3>
+    {% if p.summary %}<p class="entry-summary">{{ p.summary }}</p>{% endif %}
+  </div>
+</li>
+{% endmacro %}
+
+{% macro entries(list, id=None) %}
+<ol class="entries"{% if id %} id="{{ id }}"{% endif %}>
+{% for p in list %}{{ entry(p) }}{% endfor %}
+</ol>
+{% endmacro %}
+
+{% macro contact_buttons(cv='') %}
+<div class="actions">
+  {% if site.email %}<a class="button" href="mailto:{{ site.email }}">Email Ammara</a>{% endif %}
+  {% if cv %}<a class="button button-quiet" href="{{ cv }}" download>Download CV</a>{% endif %}
+  {% if site.linkedin %}<a class="button button-quiet" href="{{ site.linkedin }}" rel="me">LinkedIn</a>{% endif %}
+</div>
+{% endmacro %}
