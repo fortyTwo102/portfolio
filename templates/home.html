@@ -62,27 +62,4 @@
 </section>
 {% endif %}
 
-{% if site.publications or site.honours %}
-<section class="block poetry-block">
-  <h2 class="block-title">Poetry</h2>
-  <div class="poetry-cols">
-    {% if site.publications %}
-    <ul class="pubs">
-      {% for pub in site.publications %}
-      <li>
-        <span class="pub-title">{% if pub.url %}<a href="{{ pub.url }}">{{ pub.title }}</a>{% else %}{{ pub.title }}{% endif %}</span>
-        <span class="pub-venue">{{ pub.venue }}{% if pub.date %}, {{ pub.date }}{% endif %}</span>
-      </li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    {% if site.honours %}
-    <ul class="honours">
-      {% for h in site.honours[:4] %}<li>{{ h.title }}{% if h.year %} ({{ h.year }}){% endif %}</li>{% endfor %}
-    </ul>
-    {% endif %}
-  </div>
-  <p class="more-link"><a href="/about/#poetry">Publications and honours</a>{% if sections.poetry and sections.poetry.pieces %} or <a href="{{ sections.poetry.url }}">read the poems</a>{% endif %}</p>
-</section>
-{% endif %}
 {% endblock %}

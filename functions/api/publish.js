@@ -2,7 +2,7 @@
 import { json, error, requireAdmin, github, githubError, commitAuthor, missingSettings, GITHUB_SETTINGS } from '../../lib/server.js';
 
 export async function onRequestPost({ request, env }) {
-  const { session, response } = await requireAdmin(request, env);
+  const { response } = await requireAdmin(request, env);
   if (response) return response;
   const problem = missingSettings(env, GITHUB_SETTINGS);
   if (problem) return error(500, problem);
@@ -11,7 +11,7 @@ export async function onRequestPost({ request, env }) {
   try {
     const head = await gh.head();
     const tree = await gh.treeOf(head);
-    const commit = await gh.createCommit(`Publish site\n\nPublished by ${session.name} in the admin view.`, tree, [head], commitAuthor(env, session.name));
+    const commit = await gh.createCommit('Publish site\n\nPublished from the admin view.', tree, [head], commitAuthor(env));
     await gh.updateRef(commit.sha);
     return json({ head: commit.sha });
   } catch (err) {

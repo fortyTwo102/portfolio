@@ -152,15 +152,6 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; line-height: 1.15; mar
 .roles a { display: inline-block; font: 500 0.95rem/1 var(--sans); padding: 0.75rem 1rem; border: 1px solid var(--rule); border-radius: 2px; color: var(--ink); text-decoration: none; }
 .roles a:hover { border-color: var(--pencil); color: var(--pencil); }
 
-.poetry-cols { display: grid; gap: 2rem; }
-@media (min-width: 56rem) { .poetry-cols { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 4rem; } }
-.pubs { list-style: none; margin: 0; padding: 0; }
-.pubs li { padding: 0.75rem 0; border-top: 1px solid var(--rule); display: grid; gap: 0.15rem; }
-.pub-title { font-style: italic; font-size: 1.15rem; line-height: 1.35; }
-.pub-venue { font: 400 0.9rem/1.45 var(--sans); color: var(--muted); }
-.honours { margin: 0; padding-left: 1.1rem; font: 400 0.98rem/1.5 var(--sans); }
-.honours li { margin: 0 0 0.45rem; }
-.also { font: 400 0.95rem/1.55 var(--sans); color: var(--muted); max-width: 44rem; margin: 1rem 0 0; }
 
 /* ---- page heads ---- */
 
@@ -245,8 +236,7 @@ mark { background: var(--pencil-tint); color: inherit; padding: 0 0.1em; }
 .prose hr { border: 0; border-top: 1px solid var(--rule); margin: 2rem 0; }
 .prose code { font-size: 0.9em; }
 
-.poem { font-size: 1.2rem; line-height: 1.75; }
-.poem p { margin: 0 0 1.4em; }
+.keep-lines p { margin: 0 0 1.4em; }
 .plain { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
 .doc-text .plain { font: 400 1rem/1.6 var(--serif); max-width: var(--measure); padding-top: 1rem; }
 

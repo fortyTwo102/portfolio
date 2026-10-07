@@ -180,3 +180,8 @@ fieldset[data-field="sections"] .checks { flex-direction: row; }
 .login .btn { width: 100%; margin-top: 0.25rem; }
 .login .form-error { margin: 0 0 1rem; }
 .login-foot { margin: 1.25rem 0 0; font-size: 0.9rem; text-align: center; }
+
+/* sections list */
+.small { font-size: 0.85rem; margin-top: 0.15rem; }
+.inline-check { margin: 0; }
+tbody[aria-busy="true"] { opacity: 0.55; pointer-events: none; }

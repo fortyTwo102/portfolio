@@ -1,9 +1,9 @@
 ---
 title: "Editor and writer"
 order: 5
-sections: ["poetry", "content-writing"]
+sections: ["content-writing", "blogs"]
 pinned: []
 cv: ""
-highlights: ["Prose & Poetry Editor at Subtext Literary Magazine: submissions through publication", "Sets editorial standards for a team of content interns and junior writers at Tripshepherd", "Published poet: Rattle, The Margins, Verse Daily; Pushcart Prize nominee"]
+highlights: ["Manages a team of content interns and junior writers at Tripshepherd", "Sets the team's editorial standards and delegates its writing tasks", "Writes in each client's brand voice across web, email, PR and social copy"]
 ---
-Editing other writers and publishing my own: from running an issue of a literary magazine to setting editorial standards for a content team.
+Leading writers to a consistent standard: setting editorial standards and delegating work for a content team, alongside my own writing.

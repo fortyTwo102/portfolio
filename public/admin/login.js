@@ -1,9 +1,6 @@
+try { localStorage.removeItem('admin-name'); } catch { /* private browsing */ }
 const form = document.getElementById('login');
 const errorBox = document.getElementById('error');
-let savedName = '';
-try { savedName = localStorage.getItem('admin-name') || ''; } catch { /* private browsing */ }
-if (savedName) form.elements.name.value = savedName;
-
 // Say plainly if the site's settings aren't finished, instead of failing at login.
 fetch('/api/status', { cache: 'no-store' }).then((r) => r.json()).then((status) => {
   if (status.ready) return;
@@ -23,7 +20,6 @@ form.addEventListener('submit', async (event) => {
   errorBox.hidden = true;
   const username = form.elements.username.value.trim();
   const password = form.elements.password.value;
-  const name = form.elements.name.value.trim();
   if (!username || !password) {
     errorBox.textContent = 'Enter the username and password.';
     errorBox.hidden = false;
@@ -36,11 +32,10 @@ form.addEventListener('submit', async (event) => {
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-requested-with': 'admin' },
-      body: JSON.stringify({ username, password, name }),
+      body: JSON.stringify({ username, password }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'Logging in failed. Try again.');
-    try { localStorage.setItem('admin-name', name); } catch { /* private browsing */ }
     location.href = '/admin/';
   } catch (err) {
     errorBox.textContent = err.message === 'Failed to fetch' ? "Couldn't reach the site. Check your connection and try again." : err.message;

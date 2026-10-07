@@ -47,7 +47,7 @@
           {% if part.archive %}<p class="linkcard-archive">If the page has moved, read the <a href="{{ part.archive }}">archived copy</a>.</p>{% endif %}
         </div>
         {% elif part.kind == 'html' %}
-        <div class="prose{% if part.poem %} poem{% endif %}">
+        <div class="prose{% if part.keepLines %} keep-lines{% endif %}">
           {{ part.html|safe }}
         </div>
         {% elif part.kind == 'pdf' %}

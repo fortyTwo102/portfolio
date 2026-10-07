@@ -2,7 +2,7 @@
 import { json, error, requireAdmin, github, githubError, commitAuthor, allowedPath, missingSettings, GITHUB_SETTINGS } from '../../lib/server.js';
 
 export async function onRequestPost({ request, env }) {
-  const { session, response } = await requireAdmin(request, env);
+  const { response } = await requireAdmin(request, env);
   if (response) return response;
   const problem = missingSettings(env, GITHUB_SETTINGS);
   if (problem) return error(500, problem);
@@ -31,7 +31,7 @@ export async function onRequestPost({ request, env }) {
     const baseTree = await gh.treeOf(head);
     const newTree = await gh.createTree(baseTree, tree);
     const skip = body.publish ? '' : '[CF-Pages-Skip] ';
-    const commit = await gh.createCommit(`${skip}${message}\n\nSaved by ${session.name} in the admin view.`, newTree.sha, [head], commitAuthor(env, session.name));
+    const commit = await gh.createCommit(`${skip}${message}\n\nSaved in the admin view.`, newTree.sha, [head], commitAuthor(env));
     await gh.updateRef(commit.sha);
     return json({ head: commit.sha });
   } catch (err) {

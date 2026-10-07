@@ -161,10 +161,6 @@ def load_settings() -> dict:
         "cv": as_str(data.get("cv")),
         "skills": [as_str(x) for x in as_list(data.get("skills")) if as_str(x)],
         "education": [e for e in as_list(data.get("education")) if isinstance(e, dict)],
-        "publications": [p for p in as_list(data.get("publications")) if isinstance(p, dict)],
-        "alsoPublishedIn": as_str(data.get("alsoPublishedIn")),
-        "honours": [h for h in as_list(data.get("honours")) if isinstance(h, dict)],
-        "poetryNote": as_str(data.get("poetryNote")),
     }
     return s
 
@@ -259,7 +255,7 @@ def load_pieces(sections: dict, jobs: dict) -> list[dict]:
         type_ = as_str(d.get("type"))
         line_breaks = d.get("lineBreaks")
         if line_breaks is None or line_breaks == "":
-            line_breaks = type_.lower() in {"poem", "poetry"} or any(sections[s]["lineBreaks"] for s in known)
+            line_breaks = any(sections[s]["lineBreaks"] for s in known)
         p = {
             "slug": slug,
             "url": f"/work/{slug}/",
@@ -497,7 +493,7 @@ def render_piece(p: dict) -> None:
         texts.append(" ".join([as_str(link.get("title")), as_str(link.get("description"))]))
     if p["body"]:
         body_html = markdown(p["body"], p["lineBreaks"])
-        parts.append({"kind": "html", "html": body_html, "poem": p["lineBreaks"]})
+        parts.append({"kind": "html", "html": body_html, "keepLines": p["lineBreaks"]})
         texts.append(strip_tags(body_html))
     for f in p["files"]:
         rel = as_str(f.get("path")).lstrip("/")
@@ -518,15 +514,15 @@ def render_piece(p: dict) -> None:
             elif kind == "docx":
                 stem = re.sub(r"[^a-z0-9]+", "-", src.stem.lower()).strip("-") or "doc"
                 h = convert_docx(src, render_dir / stem, f"{render_url}/{stem}")
-                parts.append({"kind": "html", "html": h, "file": info, "poem": p["lineBreaks"]})
+                parts.append({"kind": "html", "html": h, "file": info, "keepLines": p["lineBreaks"]})
                 texts.append(strip_tags(h))
             elif kind == "md":
                 h = markdown(src.read_text(encoding="utf-8", errors="replace"), p["lineBreaks"])
-                parts.append({"kind": "html", "html": h, "file": info, "poem": p["lineBreaks"]})
+                parts.append({"kind": "html", "html": h, "file": info, "keepLines": p["lineBreaks"]})
                 texts.append(strip_tags(h))
             elif kind == "txt":
                 t = src.read_text(encoding="utf-8", errors="replace")
-                parts.append({"kind": "html", "html": plain_text_html(t), "file": info, "poem": True})
+                parts.append({"kind": "html", "html": plain_text_html(t), "file": info, "keepLines": True})
                 texts.append(t)
             else:
                 parts.append({"kind": "download", "file": info})

@@ -14,6 +14,5 @@ export async function onRequestPost({ request, env }) {
     return error(401, "That username and password don't match. Check them and try again.");
   }
 
-  const name = String(body.name || '').replace(/[^\p{L}\p{N} .'-]/gu, '').trim().slice(0, 40) || 'Admin';
-  return json({ name }, 200, { 'set-cookie': sessionCookie(await createSession(env, name)) });
+  return json({ ok: true }, 200, { 'set-cookie': sessionCookie(await createSession(env, 'Admin')) });
 }

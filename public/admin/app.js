@@ -8,7 +8,7 @@ import {
 const MAX_FILE = 20 * 1024 * 1024;
 const PIECE_FILE_TYPES = ['pdf', 'docx', 'md', 'markdown', 'txt'];
 const TYPE_SUGGESTIONS = ['Blog post', 'City guide', 'Landing page', 'Product page', 'Website copy', 'Press release',
-  'Email', 'Social media', 'Case study', 'Help article', 'Product documentation', 'Essay', 'Poem'];
+  'Email', 'Social media', 'Case study', 'Help article', 'Product documentation', 'Essay'];
 
 const state = {
   head: null, live: null, liveChecked: false, publishing: false, name: '',
@@ -47,8 +47,7 @@ function sortAll() {
 
 async function start() {
   try {
-    const [session, content] = await Promise.all([api('/api/session'), api('/api/content')]);
-    state.name = session.name;
+    const [, content] = await Promise.all([api('/api/session'), api('/api/content')]);
     state.head = content.head;
     ingest(content.files);
   } catch (err) {
@@ -58,7 +57,6 @@ async function start() {
       h('p', {}, h('button', { class: 'btn', type: 'button', onclick: () => location.reload() }, 'Try again'))));
     return;
   }
-  document.getElementById('who').textContent = state.name;
   route();
   checkLive();
 }
@@ -300,7 +298,7 @@ function formBanner(form, content) {
   banner.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 
-// A list of rows with the same fields (publications, education, highlights…).
+// A list of rows with the same fields (education and the like).
 function rows(fields, items, addLabel) {
   const list = h('div', { class: 'rows' });
   const addRow = (item = {}) => {
@@ -421,7 +419,7 @@ function piecesList() {
     return h('div', {},
       h('div', { class: 'list-head' }, h('h1', {}, 'Pieces')),
       h('div', { class: 'empty-state' },
-        h('p', {}, 'No pieces yet. Add the first one: a city guide, a landing page, a press release or a poem. Upload a Word file or PDF, add a link, or paste the text.'),
+        h('p', {}, 'No pieces yet. Add the first one: a city guide, a landing page or a press release. Upload a Word file or PDF, add a link, or paste the text.'),
         h('a', { class: 'btn btn-primary', href: '#/pieces/new' }, 'Add a piece')));
   }
   return h('div', {},
@@ -537,13 +535,13 @@ function pieceEditor(slug) {
   });
 
   // --- details
-  const jobSelect = h('select', { name: 'job' }, h('option', { value: '' }, 'None (freelance, personal or a publication)'),
+  const jobSelect = h('select', { name: 'job' }, h('option', { value: '' }, 'None (freelance or personal work)'),
     state.jobs.map((j) => h('option', { value: j.slug, selected: j.slug === p.job }, `${j.title}, ${j.shortName || j.company}`)));
   const company = input('company', p.company || '', { list: 'company-list' });
   const role = input('role', p.role || '');
   const paintJobHints = () => {
     const job = jobBySlug(jobSelect.value);
-    company.placeholder = job ? `${job.shortName || job.company} (from the job)` : 'Client or publication';
+    company.placeholder = job ? `${job.shortName || job.company} (from the job)` : 'Client or company';
     role.placeholder = job ? `${job.title} (from the job)` : 'For example: Copywriter';
   };
   jobSelect.addEventListener('change', paintJobHints);
@@ -552,9 +550,7 @@ function pieceEditor(slug) {
   const typeInput = input('type', p.type || '', { list: 'type-list' });
   const autoBreaks = () => {
     if (breaksTouched) return;
-    const poetic = typeInput.value.trim().toLowerCase() === 'poem'
-      || checkedValues(form, 'sections').some((s) => (state.sections.find((x) => x.slug === s) || {}).lineBreaks);
-    breaks.checked = poetic;
+    breaks.checked = checkedValues(form, 'sections').some((s) => (state.sections.find((x) => x.slug === s) || {}).lineBreaks);
   };
   typeInput.addEventListener('input', autoBreaks);
 
@@ -570,7 +566,7 @@ function pieceEditor(slug) {
       field('Web address', slugInput, { name: 'slug', hint: isNew ? 'Made from the title. You can shorten it. It can\'t change after the first save.' : 'This can\'t change, so links to the piece keep working.' }),
       h('p', { class: 'field-hint url-preview' }, urlPreview),
       sectionsGroup,
-      field('Type of writing', typeInput, { name: 'type', hint: 'For example: City guide, Landing page, Press release, Poem.' }),
+      field('Type of writing', typeInput, { name: 'type', hint: 'For example: City guide, Landing page, Press release.' }),
       field('Date', input('date', p.date || '', { placeholder: 'YYYY-MM, for example 2024-03', inputmode: 'numeric' }), { name: 'date', hint: 'A year (2024), a month (2024-03) or a day (2024-03-09).' }),
       field('Summary', input('summary', p.summary || '', { maxlength: 200 }), { name: 'summary', hint: 'One sentence shown in lists and search results.' })),
     h('section', { class: 'form-block' },
@@ -585,13 +581,13 @@ function pieceEditor(slug) {
         h('div', { class: 'label-row' }, h('label', { class: 'field-label', for: 'body-text' }, 'Text'), previewBtn),
         h('p', { class: 'field-hint' }, 'Paste or type the piece. Markdown works: **bold**, *italic*, ## heading, - list item, [link](https://…).'),
         Object.assign(body, { id: 'body-text' }), preview,
-        h('label', { class: 'check' }, breaks, h('span', {}, 'Keep line breaks', h('span', { class: 'check-hint' }, 'For poems: each new line stays a new line.')))),
+        h('label', { class: 'check' }, breaks, h('span', {}, 'Keep line breaks', h('span', { class: 'check-hint' }, 'Each new line in the text stays a new line, for things laid out line by line.')))),
     ),
     h('section', { class: 'form-block' },
       h('h2', {}, 'Specimen label'),
       h('p', { class: 'block-hint' }, 'The details shown beside the piece.'),
-      field('Job', jobSelect, { name: 'job', hint: 'Fills in the company and role. Leave as None for freelance work or a publication.' }),
-      field('Company, client or publication', company, { name: 'company' }),
+      field('Job', jobSelect, { name: 'job', hint: 'Fills in the company and role. Leave as None for freelance or personal work.' }),
+      field('Company or client', company, { name: 'company' }),
       field('Role', role, { name: 'role' }),
       field('Brief', textarea('brief', p.brief || '', { rows: 3 }), { name: 'brief', hint: 'What the piece had to do and for whom.' }),
       field('Result', input('result', p.result || ''), { name: 'result', hint: 'Only a result she can explain in an interview: what was measured and over what time.' }),
@@ -696,27 +692,86 @@ function pieceEditor(slug) {
 
 // -------------------------------------------------------------- sections ---
 
+const sectionFile = (s) => {
+  const { slug, ...data } = s;
+  return { path: `content/sections/${slug}.md`, content: serializeDoc(data) };
+};
+const publicCount = (slug) => state.pieces.filter((p) => (p.visibility || 'public') === 'public' && (p.sections || []).includes(slug)).length;
+
 function sectionsList() {
+  let busy = false;
+  const tbody = h('tbody');
+
+  // Save one or more sections right away, from the list.
+  const quickSave = async (updated, message, done) => {
+    if (busy) return;
+    busy = true;
+    tbody.setAttribute('aria-busy', 'true');
+    try {
+      await commit(updated.map(sectionFile), message);
+      for (const u of updated) state.sections = state.sections.map((x) => (x.slug === u.slug ? u : x));
+      sortAll();
+      toast(done);
+    } catch (err) {
+      toast(err.status === 401 ? 'Your session has ended. Log in again, then try again.' : err.message, true);
+    } finally {
+      busy = false;
+      tbody.removeAttribute('aria-busy');
+      paint();
+    }
+  };
+
+  const move = (index, delta) => {
+    const list = [...state.sections];
+    const target = index + delta;
+    if (target < 0 || target >= list.length) return;
+    [list[index], list[target]] = [list[target], list[index]];
+    // Renumber everything so the order is unambiguous; save only the sections whose number changed.
+    const changed = list.map((s, i) => ({ ...s, order: i + 1 })).filter((s) => state.sections.find((x) => x.slug === s.slug).order !== s.order);
+    quickSave(changed, `Reorder sections: ${list.map((s) => s.title).join(', ')}`, `Moved ${list[target].title} ${delta < 0 ? 'up' : 'down'}. Publish to update the site.`);
+  };
+
+  const paint = () => {
+    tbody.replaceChildren(...state.sections.map((s, i) => {
+      const count = publicCount(s.slug);
+      const shown = s.visible !== false;
+      const toggle = h('input', {
+        type: 'checkbox', checked: shown, 'aria-label': `List ${s.title} on the home page`,
+        onchange: () => quickSave([{ ...s, visible: !shown }], `${shown ? 'Hide' : 'Show'} section on home page: ${s.title}`,
+          `${s.title} will be ${shown ? 'hidden from' : 'listed on'} the home page after you publish.`),
+      });
+      return h('tr', {},
+        h('td', { class: 'nowrap' },
+          h('button', { type: 'button', class: 'btn btn-small btn-quiet', disabled: i === 0, 'aria-label': `Move ${s.title} up`, onclick: () => move(i, -1) }, 'Up'),
+          h('button', { type: 'button', class: 'btn btn-small btn-quiet', disabled: i === state.sections.length - 1, 'aria-label': `Move ${s.title} down`, onclick: () => move(i, 1) }, 'Down')),
+        h('td', {}, h('a', { class: 'row-title', href: `#/sections/${s.slug}` }, s.title || s.slug),
+          s.description ? h('div', { class: 'muted small' }, s.description) : null),
+        h('td', { class: 'mono' }, `/${s.slug}/`),
+        h('td', {}, String(count)),
+        h('td', {}, h('label', { class: 'check inline-check' }, toggle,
+          h('span', {}, shown ? 'Listed' : 'Hidden',
+            shown && !count ? h('span', { class: 'check-hint' }, 'Appears once it has a public piece') : null))));
+    }));
+  };
+  paint();
+
   return h('div', {},
     h('div', { class: 'list-head' }, h('h1', {}, 'Sections'), h('a', { class: 'btn btn-primary', href: '#/sections/new' }, 'Add a section')),
-    h('p', { class: 'page-hint' }, 'Sections group the work on the site, such as Copywriting or Poetry. A section only appears once it has a public piece.'),
+    h('p', { class: 'page-hint' }, 'Sections group the work, such as Copywriting or SEO. Click a name to rename it or change its web address. Untick a section to hide it from the home page, and use Up and Down to change the order. Changes save straight away; Publish puts them on the site.'),
     h('div', { class: 'table-wrap' }, h('table', { class: 'list' },
-      h('thead', {}, h('tr', {}, ['Section', 'Web address', 'Pieces', 'Shown'].map((t) => h('th', { scope: 'col' }, t)))),
-      h('tbody', {}, state.sections.map((s) => h('tr', {},
-        h('td', {}, h('a', { class: 'row-title', href: `#/sections/${s.slug}` }, s.title || s.slug)),
-        h('td', { class: 'mono' }, `/${s.slug}/`),
-        h('td', {}, String(state.pieces.filter((p) => (p.sections || []).includes(s.slug)).length)),
-        h('td', {}, s.visible === false ? 'Hidden' : 'Yes')))))));
+      h('thead', {}, h('tr', {}, ['Order', 'Section', 'Web address', 'Public pieces', 'On the home page'].map((t) => h('th', { scope: 'col' }, t)))),
+      tbody)));
 }
 
 function sectionEditor(slug) {
   const existing = slug ? state.sections.find((s) => s.slug === slug) : null;
   if (slug && !existing) return notFound('section', '#/sections', 'Back to sections');
-  const s = existing ? { ...existing } : { title: '', description: '', order: state.sections.length + 1, visible: true, lineBreaks: false };
+  const nextOrder = Math.max(0, ...state.sections.map((x) => Number(x.order) || 0)) + 1;
+  const s = existing ? { ...existing } : { title: '', description: '', order: nextOrder, visible: true, lineBreaks: false };
   const isNew = !existing;
   const form = h('form', { class: 'form', 'data-editor': 'section', novalidate: true });
   const title = input('title', s.title, { required: true });
-  const slugInput = input('slug', s.slug || '', { disabled: !isNew, spellcheck: 'false' });
+  const slugInput = input('slug', s.slug || '', { spellcheck: 'false', autocapitalize: 'none' });
   let touched = false;
   title.addEventListener('input', () => { if (isNew && !touched) slugInput.value = slugify(title.value); });
   slugInput.addEventListener('input', () => { touched = true; });
@@ -724,36 +779,57 @@ function sectionEditor(slug) {
   form.append(
     h('div', { class: 'form-error', role: 'alert', hidden: true }),
     h('section', { class: 'form-block' },
-      field('Name', title, { required: true, name: 'title' }),
-      field('Web address', slugInput, { name: 'slug', hint: isNew ? 'The section\'s page will be at /your-address/. It can\'t change later.' : `The page is at /${s.slug}/.` }),
+      field('Name', title, { required: true, name: 'title', hint: 'Shown on the home page and as the heading of the section\'s page.' }),
+      field('Web address', slugInput, {
+        name: 'slug',
+        hint: isNew ? 'The section\'s page will be at /your-address/.'
+          : `The page is at /${s.slug}/. If you change this, links to the old address stop working.`,
+      }),
       field('Description', input('description', s.description || ''), { name: 'description', hint: 'One line shown under the section name.' }),
-      field('Order', input('order', s.order ?? '', { type: 'number', min: 1, max: 99, class: 'short' }), { name: 'order', hint: 'Lower numbers come first.' }),
-      checkbox('visible', s.visible !== false, 'Show this section on the site'),
-      checkbox('lineBreaks', s.lineBreaks, 'Keep line breaks in its pieces', 'Turn this on for poetry.')),
+      checkbox('visible', s.visible !== false, 'List this section on the home page',
+        'Untick to hide it from the home page. Its page and pieces still work for anyone with the link. A section is listed only once it has at least one public piece.'),
+      checkbox('lineBreaks', s.lineBreaks, 'Keep line breaks in its pieces', 'Each new line in a piece\'s text stays a new line.')),
     formActions(isNew ? 'Save section' : 'Save changes', '#/sections'));
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     clearErrors(form);
     const f = form.elements;
-    const finalSlug = isNew ? slugify(slugInput.value || title.value) : s.slug;
+    const finalSlug = slugify(slugInput.value || (isNew ? title.value : s.slug));
+    const renamed = !isNew && finalSlug !== s.slug;
     const errors = {};
     if (!title.value.trim()) errors.title = 'Enter a name.';
-    if (isNew && !finalSlug) errors.slug = 'Enter a web address using letters and numbers.';
-    else if (isNew && RESERVED.has(finalSlug)) errors.slug = `“${finalSlug}” is used by another part of the site. Choose a different address.`;
-    else if (isNew && state.sections.some((x) => x.slug === finalSlug)) errors.slug = 'Another section already uses that address.';
+    if (!finalSlug) errors.slug = 'Enter a web address using letters and numbers.';
+    else if ((isNew || renamed) && RESERVED.has(finalSlug)) errors.slug = `“${finalSlug}” is used by another part of the site. Choose a different address.`;
+    else if ((isNew || renamed) && state.sections.some((x) => x.slug === finalSlug)) errors.slug = 'Another section already uses that address.';
     if (Object.keys(errors).length) { showErrors(form, errors); return; }
+    if (renamed && !confirm(`Change the address from /${s.slug}/ to /${finalSlug}/? Links to the old address will stop working.`)) return;
     const data = {
       title: title.value.trim(), description: f.description.value.trim(),
-      order: f.order.value ? Number(f.order.value) : 99, visible: f.visible.checked, lineBreaks: f.lineBreaks.checked,
+      order: Number(s.order) || nextOrder, visible: f.visible.checked, lineBreaks: f.lineBreaks.checked,
     };
     const ok = await runSave(form, form.querySelector('[type=submit]'), async (progress) => {
       progress('Saving…');
-      await commit([{ path: `content/sections/${finalSlug}.md`, content: serializeDoc(data) }], `${isNew ? 'Add' : 'Edit'} section: ${data.title}`);
-      state.sections = state.sections.filter((x) => x.slug !== finalSlug).concat({ ...data, slug: finalSlug });
+      const changes = [{ path: `content/sections/${finalSlug}.md`, content: serializeDoc(data) }];
+      let movedPieces = [];
+      let movedRoles = [];
+      if (renamed) {
+        // Move the section and point every piece and role page at the new address, in one commit.
+        changes.push({ path: `content/sections/${s.slug}.md`, delete: true });
+        const swap = (list) => list.map((x) => (x === s.slug ? finalSlug : x));
+        movedPieces = state.pieces.filter((p) => (p.sections || []).includes(s.slug)).map((p) => ({ ...p, sections: swap(p.sections) }));
+        movedRoles = state.roles.filter((r) => (r.sections || []).includes(s.slug)).map((r) => ({ ...r, sections: swap(r.sections) }));
+        for (const p of movedPieces) { const { slug: ps, body, ...pd } = p; changes.push({ path: `content/pieces/${ps}.md`, content: serializeDoc(pd, body) }); }
+        for (const r of movedRoles) { const { slug: rs, intro, ...rd } = r; changes.push({ path: `content/focus/${rs}.md`, content: serializeDoc(rd, intro) }); }
+      }
+      const verb = isNew ? 'Add' : renamed ? 'Rename' : 'Edit';
+      await commit(changes, `${verb} section: ${data.title}${renamed ? ` (/${s.slug}/ → /${finalSlug}/)` : ''}`);
+      state.sections = state.sections.filter((x) => x.slug !== finalSlug && x.slug !== s.slug).concat({ ...data, slug: finalSlug });
+      for (const p of movedPieces) state.pieces = state.pieces.map((x) => (x.slug === p.slug ? p : x));
+      for (const r of movedRoles) state.roles = state.roles.map((x) => (x.slug === r.slug ? r : x));
       sortAll();
     });
-    if (ok) { toast(`Saved the ${data.title} section.`); go('#/sections'); }
+    if (ok) { toast(`Saved the ${data.title} section. Publish to put it on the site.`); go('#/sections'); }
   });
 
   const deleteAction = isNew ? null : async () => {
@@ -979,8 +1055,6 @@ function profileEditor() {
   const s = state.settings;
   const form = h('form', { class: 'form', 'data-editor': 'profile', novalidate: true });
   const education = rows([{ key: 'degree', label: 'Degree', wide: true }, { key: 'school', label: 'School' }, { key: 'years', label: 'Years', placeholder: '2017–2019' }], s.education || [], 'Add education');
-  const pubs = rows([{ key: 'title', label: 'Title', wide: true }, { key: 'venue', label: 'Journal' }, { key: 'date', label: 'Date', placeholder: 'Summer 2025' }, { key: 'url', label: 'Link', placeholder: 'https://', wide: true }], s.publications || [], 'Add a publication');
-  const honours = rows([{ key: 'title', label: 'Honour', wide: true }, { key: 'year', label: 'Year' }], s.honours || [], 'Add an honour');
   const photo = fileSlot('photo', s.photo, 'image/jpeg,image/png,image/webp', 'Photo (optional, JPG, PNG or WebP)');
   const cv = fileSlot('cv', s.cv, '.pdf,application/pdf', 'General CV (PDF)');
 
@@ -1003,12 +1077,6 @@ function profileEditor() {
       field('About', textarea('about', s.about, { rows: 12 }), { name: 'about', hint: 'Markdown works. Leave a blank line between paragraphs.' }),
       field('Skills and tools', input('skills', (s.skills || []).join(', ')), { name: 'skills', hint: 'Separate with commas.' }),
       h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Education'), education.el)),
-    h('section', { class: 'form-block' },
-      h('h2', {}, 'Poetry'),
-      h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Selected publications'), pubs.el),
-      field('Also published in', textarea('alsoPublishedIn', s.alsoPublishedIn, { rows: 3 }), { name: 'alsoPublishedIn' }),
-      h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Honours'), honours.el),
-      field('Note', input('poetryNote', s.poetryNote), { name: 'poetryNote', hint: 'For example: Working on two poetry manuscripts and a novel.' })),
     formActions('Save profile', '#/pieces'));
 
   form.addEventListener('submit', async (e) => {
@@ -1045,8 +1113,7 @@ function profileEditor() {
         name: f.name.value.trim(), headline: f.headline.value.trim(), intro: f.intro.value.trim(), results: lines(f.results.value),
         about: f.about.value.trim(), location: f.location.value.trim(), email: f.email.value.trim(), linkedin: f.linkedin.value.trim(),
         photo: photoPath, cv: cvPath, skills: f.skills.value.split(',').map((x) => x.trim()).filter(Boolean),
-        education: education.value(), publications: pubs.value(), alsoPublishedIn: f.alsoPublishedIn.value.trim(),
-        honours: honours.value(), poetryNote: f.poetryNote.value.trim(),
+        education: education.value(),
       };
       changes.push({ path: 'content/settings.yml', content: `${serializeFields(data)}\n` });
       await commit(changes, 'Edit profile');
@@ -1056,7 +1123,7 @@ function profileEditor() {
   });
 
   return h('div', { class: 'editor' }, h('div', { class: 'editor-head' }, h('h1', {}, 'Profile')),
-    h('p', { class: 'page-hint' }, 'Her name, introduction, contact details, About page and poetry credits.'), form);
+    h('p', { class: 'page-hint' }, 'Her name, introduction, contact details and About page.'), form);
 }
 
 function notFound(what, backHash, backLabel) {
