@@ -17,44 +17,41 @@ Everything is free. Cloudflare Pages hosts the site and runs the admin login, an
 
 **Saving** in the admin view creates a commit that starts with `[CF-Pages-Skip]`, so Cloudflare doesn't rebuild. **Publish** creates a commit without that flag, which makes Cloudflare build and deploy the site, usually in a minute or two. The admin view checks `/build.json` to show when the change is live.
 
-## One-time setup (about 15 minutes)
+## One-time setup
 
-### 1. Create a GitHub token for the admin view
+### 1. Make a GitHub key for the admin view
 
-1. Open github.com, go to **Settings → Developer settings → Personal access tokens → Fine-grained tokens**, and select **Generate new token**.
-2. Fill in the token settings:
-   - **Name:** `portfolio admin`
-   - **Expiration:** *No expiration*. If you pick a date, set yourself a reminder to replace the token before it runs out.
-   - **Repository access:** *Only select repositories*, then `fortyTwo102/portfolio`.
-   - **Permissions → Repository permissions → Contents:** *Read and write*.
-3. Generate the token and copy it. It starts with `github_pat_`.
+Open this link. It fills in the form for you:
+https://github.com/settings/personal-access-tokens/new?name=portfolio%20admin&description=Lets%20the%20portfolio%20admin%20view%20save%20changes&expires_in=none&contents=write
+
+1. Under **Repository access**, choose **Only select repositories**, then pick `portfolio`.
+2. Check that **Contents** is set to **Read and write** under **Permissions**.
+3. Select **Generate token** and copy the key. It starts with `github_pat_`.
 
 ### 2. Create the Cloudflare Pages project
 
-1. Go to [dash.cloudflare.com](https://dash.cloudflare.com) and create a free account. Then go to **Workers & Pages → Create → Pages → Connect to Git**, authorize GitHub, and pick `fortyTwo102/portfolio`.
-2. Enter the build settings:
+1. In [dash.cloudflare.com](https://dash.cloudflare.com), go to **Workers & Pages → Create application → Pages → Connect to Git**. Allow Cloudflare to see the `portfolio` repository and select it.
+2. Fill in the settings:
    - **Project name:** `ammara-younas`. This becomes the address ammara-younas.pages.dev.
    - **Production branch:** `main`
    - **Framework preset:** None
-   - **Build command:**
-     ```
-     pip install -r requirements.txt && (pip install pypandoc-binary || true) && python build.py
-     ```
+   - **Build command:** `pip install -r requirements.txt && (pip install pypandoc-binary || true) && python build.py`
    - **Build output directory:** `dist`
-3. Under **Environment variables (advanced)**, add the variables below. Choose *Encrypt* for the ones marked secret.
+3. Select **Save and Deploy**.
 
-   | Name | Value |
-   |---|---|
-   | `ADMIN_USERNAME` | The shared username |
-   | `ADMIN_PASSWORD` (secret) | The shared password. Make it long: four or more random words, or 16+ characters. |
-   | `SESSION_SECRET` (secret) | Any long random string (40+ characters from a password generator) |
-   | `GITHUB_TOKEN` (secret) | The token from step 1 |
-   | `GITHUB_REPO` | `fortyTwo102/portfolio` |
-   | `SITE_URL` | `https://ammara-younas.pages.dev`. Change this only if Cloudflare gives the project a different address. |
+### 3. Add three settings
 
-4. Select **Save and Deploy**. When the deploy finishes, open `/admin`, log in, add a piece and select **Publish**.
+In the project, go to **Settings → Variables and Secrets** and add these three. Choose **Secret** as the type for each one:
 
-If you add or change a variable later, it takes effect only after a new deploy. To redeploy, go to **Deployments**, open the latest deployment's menu and choose **Retry deployment**.
+| Name | Value |
+|---|---|
+| `ADMIN_USERNAME` | The shared username |
+| `ADMIN_PASSWORD` | The shared password. Make it long: four or more random words, or 16+ characters. |
+| `GITHUB_TOKEN` | The key from step 1 |
+
+Then deploy again so the settings take effect. To do that, go to **Deployments**, open the menu on the latest deployment and choose **Retry deployment**. The login page at `/admin` tells you if anything is still missing.
+
+Optional settings, which you only need if something changes: `SITE_URL` if Cloudflare gives the project a different address, `GITHUB_REPO` if the repository is renamed or moved (the default is `fortyTwo102/portfolio`), and `SESSION_SECRET` to sign logins with something other than the GitHub key.
 
 ## Using the admin view
 
@@ -66,7 +63,7 @@ If you add or change a variable later, it takes effect only after a new deploy. 
 
 ## Changing the password
 
-Change `ADMIN_PASSWORD` in Cloudflare and redeploy. Changing it signs everyone out.
+Change `ADMIN_PASSWORD` in Cloudflare and deploy again. Changing it signs everyone out. Replacing the GitHub key also signs everyone out.
 
 ## Local preview
 

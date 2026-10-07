@@ -1,7 +1,7 @@
-import { json, error, safeEqual, createSession, sessionCookie, missingSettings } from '../../lib/server.js';
+import { json, error, safeEqual, createSession, sessionCookie, missingSettings, REQUIRED_SETTINGS } from '../../lib/server.js';
 
 export async function onRequestPost({ request, env }) {
-  const problem = missingSettings(env, ['ADMIN_USERNAME', 'ADMIN_PASSWORD', 'SESSION_SECRET']);
+  const problem = missingSettings(env, REQUIRED_SETTINGS);
   if (problem) return error(500, problem);
 
   let body;
