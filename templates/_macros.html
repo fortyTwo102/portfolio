@@ -1,8 +1,9 @@
-{% macro entry(p) %}
-<li class="entry" data-company="{{ p.company }}" data-type="{{ p.type }}" data-year="{{ p.year }}">
+{% macro entry(p, hide=()) %}
+<li class="entry" data-company="{{ p.company }}" data-type="{{ p.type }}" data-year="{{ p.year }}" data-place="{{ p.place }}" data-topics="{{ p.topics|join('|') }}">
   <div class="entry-meta">
-    {% if p.type %}<span>{{ p.type }}</span>{% endif %}
-    {% if p.company %}<span>{{ p.company }}</span>{% endif %}
+    {% if p.place %}<span class="entry-place">{{ p.place }}</span>{% elif p.topics %}<span class="entry-place">{{ p.topics[0] }}</span>{% endif %}
+    {% if p.type and 'type' not in hide %}<span>{{ p.type }}</span>{% endif %}
+    {% if p.company and 'company' not in hide %}<span>{{ p.company }}</span>{% endif %}
     {% if p.dateLabel %}<span>{{ p.dateLabel }}</span>{% endif %}
   </div>
   <div class="entry-main">
@@ -12,10 +13,66 @@
 </li>
 {% endmacro %}
 
-{% macro entries(list, id=None) %}
+{% macro entries(list, id=None, hide=()) %}
 <ol class="entries"{% if id %} id="{{ id }}"{% endif %}>
-{% for p in list %}{{ entry(p) }}{% endfor %}
+{% for p in list %}{{ entry(p, hide) }}{% endfor %}
 </ol>
+{% endmacro %}
+
+{# A list of links. Captions that repeat (Canada / USA) become labelled groups. #}
+{% macro link_list(part) %}
+{% if part.groups %}
+<div class="linkgroups">
+  {% for g in part.groups %}
+  <div class="linkgroup">
+    <p class="kicker">{{ g.label }} · {{ g['items']|length }}</p>
+    <ul class="linklist linklist-plain">
+      {% for l in g['items'] %}<li><a href="{{ l.url }}">{{ l.title }}</a></li>{% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</div>
+{% elif part['items']|selectattr('description')|list %}
+{% set one_site = part['items']|map(attribute='site')|unique|list|length == 1 %}
+{% set short = (part['items']|map(attribute='description')|map('length')|max) < 40 %}
+<ul class="linklist{% if short and part['items']|length > 5 %} linklist-cols{% endif %}">
+  {% for l in part['items'] %}
+  <li><a href="{{ l.url }}">{{ l.title }}</a>{% if l.description %}<span class="linklist-note">{{ l.description }}</span>{% endif %}{% if not one_site %}<span class="linklist-site">{{ l.site }}</span>{% endif %}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<ul class="linkchips">
+  {% for l in part['items'] %}<li><a href="{{ l.url }}">{{ l.title }}<span class="linkchips-site">{{ l.site }}</span></a></li>{% endfor %}
+</ul>
+{% endif %}
+{% endmacro %}
+
+{# A piece shown in full inside a section page (the "cards" layout). #}
+{% macro card(p, hide=()) %}
+<article class="card" id="{{ p.slug }}">
+  <p class="kicker">
+    {% set bits = [] %}
+    {% if p.type and 'type' not in hide %}{% set _ = bits.append(p.type) %}{% endif %}
+    {% if p.company and 'company' not in hide and p.company != p.title %}{% set _ = bits.append(p.company) %}{% endif %}
+    {% if p.place %}{% set _ = bits.append(p.place) %}{% endif %}
+    {% for t in p.topics %}{% set _ = bits.append(t) %}{% endfor %}
+    {% if p.dateLabel %}{% set _ = bits.append(p.dateLabel) %}{% endif %}
+    {{ bits|join(' · ') }}
+  </p>
+  <h3 class="card-title"><a href="{{ p.url }}">{{ p.title }}</a></h3>
+  {% for part in p.parts %}
+    {% if part.kind == 'html' %}
+    <div class="card-body prose{% if part.keepLines %} keep-lines{% endif %}">{{ part.html|safe }}</div>
+    {% elif part.kind == 'link' %}
+    <ul class="linkchips"><li><a href="{{ part.url }}">{{ part.title }}<span class="linkchips-site">{{ part.site }}</span></a></li></ul>
+    {% elif part.kind == 'links' %}
+    {{ link_list(part) }}
+    {% elif part.kind in ('pdf', 'download') or part.file %}
+    <p class="card-file"><a href="{{ p.url }}">{{ 'View' if part.kind == 'pdf' else 'Read' }} {{ part.file.name }}</a></p>
+    {% endif %}
+  {% endfor %}
+  {% if not p.parts and p.summary %}<p class="card-body">{{ p.summary }}</p>{% endif %}
+</article>
 {% endmacro %}
 
 {% macro contact_buttons(cv='') %}

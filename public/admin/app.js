@@ -30,7 +30,7 @@ function ingest(files) {
     if (!m) continue;
     const { data, body } = parseDoc(text);
     const item = { ...data, slug: m[2] };
-    if (m[1] === 'sections') state.sections.push(item);
+    if (m[1] === 'sections') state.sections.push({ ...item, intro: body || item.description || '' });
     if (m[1] === 'jobs') state.jobs.push(item);
     if (m[1] === 'focus') state.roles.push({ ...item, intro: body });
     if (m[1] === 'pieces') state.pieces.push({ ...item, body });
@@ -490,7 +490,7 @@ function pieceEditor(slug) {
   const addLink = (link = {}) => {
     const url = h('input', { 'data-key': 'url', value: link.url || '', placeholder: 'https://', type: 'url', inputmode: 'url', 'aria-label': 'Link address' });
     const fields = ['title', 'description', 'site', 'image', 'archive'].map((k) => h('label', { class: 'row-field wide' },
-      h('span', { class: 'row-label' }, { title: 'Title', description: 'Description', site: 'Site name', image: 'Preview image address', archive: 'Archived copy (Wayback Machine)' }[k]),
+      h('span', { class: 'row-label' }, { title: 'Title', description: 'Description or caption (for example the city)', site: 'Site name', image: 'Preview image address', archive: 'Archived copy (Wayback Machine)' }[k]),
       k === 'description' ? h('textarea', { 'data-key': k, rows: 2 }, link[k] || '') : h('input', { 'data-key': k, value: link[k] || '' })));
     const details = h('details', { class: 'link-details', open: Boolean(link.title) }, h('summary', {}, 'Preview details'), ...fields);
     const note = h('p', { class: 'field-hint link-note' });
@@ -567,7 +567,9 @@ function pieceEditor(slug) {
       h('p', { class: 'field-hint url-preview' }, urlPreview),
       sectionsGroup,
       field('Type of writing', typeInput, { name: 'type', hint: 'For example: City guide, Landing page, Press release.' }),
-      field('Date', input('date', p.date || '', { placeholder: 'YYYY-MM, for example 2024-03', inputmode: 'numeric' }), { name: 'date', hint: 'A year (2024), a month (2024-03) or a day (2024-03-09).' }),
+      field('Place', input('place', p.place || '', { list: 'place-list' }), { name: 'place', hint: 'Where the piece is about, for example Toronto or Niagara. Shown in lists and used as a filter.' }),
+      field('Topics', input('topics', (p.topics || []).join(', '), { list: 'topic-list' }), { name: 'topics', hint: 'Separate with commas, for example: Seasonal, Planning & booking. They become filter buttons on the section page.' }),
+      field('Date', input('date', p.date || '', { placeholder: 'YYYY-MM, for example 2024-03', inputmode: 'numeric' }), { name: 'date', hint: 'A year (2024), a month (2024-03) or a day (2024-03-09). Leave empty if unknown.' }),
       field('Summary', input('summary', p.summary || '', { maxlength: 200 }), { name: 'summary', hint: 'One sentence shown in lists and search results.' })),
     h('section', { class: 'form-block' },
       h('h2', {}, 'The work'),
@@ -600,10 +602,12 @@ function pieceEditor(slug) {
         { value: 'draft', label: 'Draft', hint: 'Saved here but not on the site.' },
       ], p.visibility || 'public', 'Visibility'),
       checkbox('featured', p.featured, 'Feature on the home page', 'Up to six featured pieces appear under Selected work.'),
-      field('Order', input('order', p.order ?? '', { type: 'number', min: 1, max: 99, class: 'short' }), { name: 'order', hint: 'Lower numbers come first among featured pieces.' })),
+      field('Order', input('order', p.order || '', { type: 'number', min: 1, max: 999, class: 'short' }), { name: 'order', hint: 'Numbered pieces are listed in this order, lowest first. Pieces with no number come before them, newest first.' })),
     formActions(isNew ? 'Save piece' : 'Save changes', '#/pieces'),
     datalist('type-list', [...TYPE_SUGGESTIONS, ...state.pieces.map((x) => x.type)]),
     datalist('company-list', state.pieces.map((x) => x.company)),
+    datalist('place-list', state.pieces.map((x) => x.place)),
+    datalist('topic-list', state.pieces.flatMap((x) => x.topics || [])),
   );
 
   form.addEventListener('submit', async (e) => {
@@ -658,6 +662,8 @@ function pieceEditor(slug) {
         brief: f.brief.value.trim(),
         result: f.result.value.trim(),
         tags: f.tags.value.split(',').map((s) => s.trim()).filter(Boolean),
+        place: f.place.value.trim(),
+        topics: f.topics.value.split(',').map((s) => s.trim()).filter(Boolean),
         featured: f.featured.checked,
         order: f.order.value ? Number(f.order.value) : '',
         visibility: f.visibility.value,
@@ -693,8 +699,8 @@ function pieceEditor(slug) {
 // -------------------------------------------------------------- sections ---
 
 const sectionFile = (s) => {
-  const { slug, ...data } = s;
-  return { path: `content/sections/${slug}.md`, content: serializeDoc(data) };
+  const { slug, intro, description, ...data } = s;
+  return { path: `content/sections/${slug}.md`, content: serializeDoc(data, intro) };
 };
 const publicCount = (slug) => state.pieces.filter((p) => (p.visibility || 'public') === 'public' && (p.sections || []).includes(slug)).length;
 
@@ -745,7 +751,7 @@ function sectionsList() {
           h('button', { type: 'button', class: 'btn btn-small btn-quiet', disabled: i === 0, 'aria-label': `Move ${s.title} up`, onclick: () => move(i, -1) }, 'Up'),
           h('button', { type: 'button', class: 'btn btn-small btn-quiet', disabled: i === state.sections.length - 1, 'aria-label': `Move ${s.title} down`, onclick: () => move(i, 1) }, 'Down')),
         h('td', {}, h('a', { class: 'row-title', href: `#/sections/${s.slug}` }, s.title || s.slug),
-          s.description ? h('div', { class: 'muted small' }, s.description) : null),
+          (s.summary || s.description) ? h('div', { class: 'muted small' }, s.summary || s.description) : null),
         h('td', { class: 'mono' }, `/${s.slug}/`),
         h('td', {}, String(count)),
         h('td', {}, h('label', { class: 'check inline-check' }, toggle,
@@ -767,7 +773,7 @@ function sectionEditor(slug) {
   const existing = slug ? state.sections.find((s) => s.slug === slug) : null;
   if (slug && !existing) return notFound('section', '#/sections', 'Back to sections');
   const nextOrder = Math.max(0, ...state.sections.map((x) => Number(x.order) || 0)) + 1;
-  const s = existing ? { ...existing } : { title: '', description: '', order: nextOrder, visible: true, lineBreaks: false };
+  const s = existing ? { ...existing } : { title: '', navLabel: '', label: '', summary: '', cta: '', layout: 'list', intro: '', order: nextOrder, visible: true, lineBreaks: false };
   const isNew = !existing;
   const form = h('form', { class: 'form', 'data-editor': 'section', novalidate: true });
   const title = input('title', s.title, { required: true });
@@ -785,10 +791,22 @@ function sectionEditor(slug) {
         hint: isNew ? 'The section\'s page will be at /your-address/.'
           : `The page is at /${s.slug}/. If you change this, links to the old address stop working.`,
       }),
-      field('Description', input('description', s.description || ''), { name: 'description', hint: 'One line shown under the section name.' }),
+      field('Short name for the menu', input('navLabel', s.navLabel || '', { placeholder: 'Same as the name' }), { name: 'navLabel', hint: 'Shown in the row of sections under the site header, for example PR.' }),
+      field('Label', input('label', s.label || ''), { name: 'label', hint: 'Small line above the name, for example: See Sight Tours · Oct 2022 – present.' }),
+      field('Introduction', textarea('intro', s.intro || '', { rows: 4 }), { name: 'intro', hint: 'Shown at the top of the section\'s page. Markdown works, including [links](https://…).' })),
+    h('section', { class: 'form-block' },
+      h('h2', {}, 'On the home page'),
+      field('Summary', textarea('summary', s.summary || s.description || '', { rows: 2 }), { name: 'summary', hint: 'One or two sentences on the section\'s tile.' }),
+      field('Button text', input('cta', s.cta || '', { placeholder: 'See the work' }), { name: 'cta', hint: 'For example: Read the blogs.' }),
       checkbox('visible', s.visible !== false, 'List this section on the home page',
         'Untick to hide it from the home page. Its page and pieces still work for anyone with the link. A section is listed only once it has at least one public piece.'),
       checkbox('lineBreaks', s.lineBreaks, 'Keep line breaks in its pieces', 'Each new line in a piece\'s text stays a new line.')),
+    h('section', { class: 'form-block' },
+      h('h2', {}, 'Section page layout'),
+      radioGroup('layout', [
+        { value: 'list', label: 'List', hint: 'One line per piece with its summary, plus filters. Best for many pieces, like blogs.' },
+        { value: 'cards', label: 'Cards', hint: 'Each piece shown in full: its text and all its links. Best for a few pieces, like campaigns.' },
+      ], s.layout === 'cards' ? 'cards' : 'list', 'Layout')),
     formActions(isNew ? 'Save section' : 'Save changes', '#/sections'));
 
   form.addEventListener('submit', async (e) => {
@@ -805,12 +823,14 @@ function sectionEditor(slug) {
     if (Object.keys(errors).length) { showErrors(form, errors); return; }
     if (renamed && !confirm(`Change the address from /${s.slug}/ to /${finalSlug}/? Links to the old address will stop working.`)) return;
     const data = {
-      title: title.value.trim(), description: f.description.value.trim(),
+      title: title.value.trim(), navLabel: f.navLabel.value.trim(), label: f.label.value.trim(),
+      summary: f.summary.value.trim(), cta: f.cta.value.trim(), layout: f.layout.value,
       order: Number(s.order) || nextOrder, visible: f.visible.checked, lineBreaks: f.lineBreaks.checked,
     };
+    const intro = f.intro.value.trim();
     const ok = await runSave(form, form.querySelector('[type=submit]'), async (progress) => {
       progress('Saving…');
-      const changes = [{ path: `content/sections/${finalSlug}.md`, content: serializeDoc(data) }];
+      const changes = [sectionFile({ ...data, slug: finalSlug, intro })];
       let movedPieces = [];
       let movedRoles = [];
       if (renamed) {
@@ -824,7 +844,7 @@ function sectionEditor(slug) {
       }
       const verb = isNew ? 'Add' : renamed ? 'Rename' : 'Edit';
       await commit(changes, `${verb} section: ${data.title}${renamed ? ` (/${s.slug}/ → /${finalSlug}/)` : ''}`);
-      state.sections = state.sections.filter((x) => x.slug !== finalSlug && x.slug !== s.slug).concat({ ...data, slug: finalSlug });
+      state.sections = state.sections.filter((x) => x.slug !== finalSlug && x.slug !== s.slug).concat({ ...data, slug: finalSlug, intro });
       for (const p of movedPieces) state.pieces = state.pieces.map((x) => (x.slug === p.slug ? p : x));
       for (const r of movedRoles) state.roles = state.roles.map((x) => (x.slug === r.slug ? r : x));
       sortAll();
@@ -1063,14 +1083,18 @@ function profileEditor() {
     h('section', { class: 'form-block' },
       h('h2', {}, 'Home page'),
       field('Name', input('name', s.name), { required: true, name: 'name' }),
-      field('Headline', input('headline', s.headline), { name: 'headline', hint: 'Under her name, for example: Content writer and copywriter.' }),
+      field('Label', input('kicker', s.kicker), { name: 'kicker', hint: 'Small line above her name, for example: Writing portfolio · Copywriter & content strategist · Since 2021.' }),
+      field('Headline', input('headline', s.headline), { name: 'headline', hint: 'Under her name, for example: Travel, SEO & brand copy.' }),
       field('Introduction', textarea('intro', s.intro, { rows: 5 }), { name: 'intro', hint: 'The paragraph on the home page.' }),
-      field('Results', textarea('results', (s.results || []).join('\n'), { rows: 4 }), { name: 'results', hint: 'One per line. Only numbers she can explain in an interview.' })),
+      field('Results', textarea('results', (s.results || []).join('\n'), { rows: 4 }), { name: 'results', hint: 'One per line, starting with the number, for example: 28% lift in direct booking conversions. The number is shown large. Only numbers she can explain in an interview.' }),
+      field('Search engine description', textarea('description', s.description, { rows: 2 }), { name: 'description', hint: 'One sentence that search engines and link previews show for the home page.' })),
     h('section', { class: 'form-block' },
       h('h2', {}, 'Contact'),
       field('Email', input('email', s.email, { type: 'email' }), { name: 'email' }),
+      field('Phone', input('phone', s.phone, { type: 'tel' }), { name: 'phone', hint: 'Shown in the footer of every page. Leave empty to hide it.' }),
       field('LinkedIn', input('linkedin', s.linkedin, { type: 'url', placeholder: 'https://www.linkedin.com/in/…' }), { name: 'linkedin' }),
       field('Location line', input('location', s.location), { name: 'location', hint: 'For example: Based in Pakistan (PKT, UTC+5). Open to remote roles.' }),
+      field('Footer note', input('footnote', s.footnote), { name: 'footnote', hint: 'Small print at the bottom of every page.' }),
       cv.el, photo.el),
     h('section', { class: 'form-block' },
       h('h2', {}, 'About page'),
@@ -1110,10 +1134,11 @@ function profileEditor() {
       } else if (cv.removed && cvPath) { changes.push({ path: `public${cvPath}`, delete: true }); cvPath = ''; }
       progress('Saving…');
       const data = {
-        name: f.name.value.trim(), headline: f.headline.value.trim(), intro: f.intro.value.trim(), results: lines(f.results.value),
-        about: f.about.value.trim(), location: f.location.value.trim(), email: f.email.value.trim(), linkedin: f.linkedin.value.trim(),
+        name: f.name.value.trim(), kicker: f.kicker.value.trim(), headline: f.headline.value.trim(), intro: f.intro.value.trim(),
+        results: lines(f.results.value), about: f.about.value.trim(), location: f.location.value.trim(),
+        email: f.email.value.trim(), phone: f.phone.value.trim(), linkedin: f.linkedin.value.trim(),
         photo: photoPath, cv: cvPath, skills: f.skills.value.split(',').map((x) => x.trim()).filter(Boolean),
-        education: education.value(),
+        education: education.value(), description: f.description.value.trim(), footnote: f.footnote.value.trim(),
       };
       changes.push({ path: 'content/settings.yml', content: `${serializeFields(data)}\n` });
       await commit(changes, 'Edit profile');

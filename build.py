@@ -150,19 +150,33 @@ def load_settings() -> dict:
         warn("content/settings.yml is missing; using defaults")
     s = {
         "name": as_str(data.get("name")) or "Ammara Younas",
+        "kicker": as_str(data.get("kicker")),
         "headline": as_str(data.get("headline")),
         "intro": as_str(data.get("intro")),
         "results": [as_str(x) for x in as_list(data.get("results")) if as_str(x)],
         "about": as_str(data.get("about")),
         "location": as_str(data.get("location")),
         "email": as_str(data.get("email")),
+        "phone": as_str(data.get("phone")),
         "linkedin": as_str(data.get("linkedin")),
         "photo": as_str(data.get("photo")),
         "cv": as_str(data.get("cv")),
         "skills": [as_str(x) for x in as_list(data.get("skills")) if as_str(x)],
         "education": [e for e in as_list(data.get("education")) if isinstance(e, dict)],
+        "description": as_str(data.get("description")),
+        "footnote": as_str(data.get("footnote")),
     }
+    s["facts"] = [split_fact(r) for r in s["results"]]
     return s
+
+
+FACT_RE = re.compile(r"^((?:[$£€]?\d[\d,.]*\s?(?:%|x|k|m)?\+?))\s+(.+)$", re.I)
+
+
+def split_fact(text: str) -> dict:
+    """'180%+ organic traffic growth' -> big figure '180%+' and caption; plain lines keep no figure."""
+    m = FACT_RE.match(text)
+    return {"figure": m.group(1), "caption": m.group(2)} if m else {"figure": "", "caption": text}
 
 
 def load_collection(folder: str) -> list[tuple[str, dict, str]]:
@@ -189,7 +203,14 @@ def load_sections() -> dict[str, dict]:
         sections[slug] = {
             "slug": slug,
             "title": as_str(d.get("title")) or slug.replace("-", " ").capitalize(),
-            "description": as_str(d.get("description")),
+            "navLabel": as_str(d.get("navLabel")) or as_str(d.get("title")) or slug,
+            "label": as_str(d.get("label")),
+            "summary": as_str(d.get("summary")),
+            "cta": as_str(d.get("cta")) or "See the work",
+            "layout": "cards" if as_str(d.get("layout")) == "cards" else "list",
+            # The introduction is the file's body; older files kept it in "description".
+            "intro": body or as_str(d.get("description")),
+            "description": as_str(d.get("summary")) or as_str(d.get("description")) or body.split("\n")[0],
             "order": as_int(d.get("order"), 99),
             "visible": as_bool(d.get("visible"), True),
             "lineBreaks": as_bool(d.get("lineBreaks"), False),
@@ -262,6 +283,8 @@ def load_pieces(sections: dict, jobs: dict) -> list[dict]:
             "title": as_str(d.get("title")) or slug,
             "sections": known,
             "type": type_,
+            "place": as_str(d.get("place")),
+            "topics": [as_str(t) for t in as_list(d.get("topics")) if as_str(t)],
             "date": date,
             "dateLabel": format_date(date),
             "year": str(y) if y else "",
@@ -274,7 +297,8 @@ def load_pieces(sections: dict, jobs: dict) -> list[dict]:
             "role": as_str(d.get("role")) or (job["title"] if job else ""),
             "result": as_str(d.get("result")),
             "featured": as_bool(d.get("featured")),
-            "order": as_int(d.get("order"), 99),
+            # No order = 0, so new pieces list first (newest first), then the numbered ones in order.
+            "order": as_int(d.get("order"), 0),
             "visibility": visibility,
             "lineBreaks": as_bool(line_breaks),
             "files": [f for f in as_list(d.get("files")) if isinstance(f, dict) and as_str(f.get("path"))],
@@ -282,7 +306,7 @@ def load_pieces(sections: dict, jobs: dict) -> list[dict]:
             "body": body,
         }
         pieces.append(p)
-    pieces.sort(key=lambda p: (p["sortDate"], -p["order"]), reverse=True)
+    pieces.sort(key=lambda p: (p["order"], tuple(-x for x in p["sortDate"]), p["title"].lower()))
     return pieces
 
 
@@ -475,26 +499,42 @@ FILE_KINDS = {".pdf": "pdf", ".docx": "docx", ".md": "md", ".markdown": "md", ".
 KIND_LABEL = {"pdf": "PDF", "docx": "Word document", "md": "Markdown file", "txt": "text file", "other": "file"}
 
 
+def link_item(link: dict) -> dict:
+    url = as_str(link.get("url"))
+    image = as_str(link.get("image"))
+    return {
+        "url": url,
+        "title": as_str(link.get("title")) or url,
+        "description": as_str(link.get("description")),
+        "site": as_str(link.get("site")) or re.sub(r"^www\.", "", re.sub(r"^https?://([^/]+).*$", r"\1", url)),
+        "image": image if image.startswith("https://") else "",
+        "archive": as_str(link.get("archive")),
+    }
+
+
+def group_links(items: list[dict]) -> list[dict]:
+    """Many links sharing a few captions (Canada / USA) read best as labelled groups."""
+    captions = [i["description"] for i in items]
+    distinct = list(dict.fromkeys(captions))
+    if len(items) >= 6 and all(captions) and 1 < len(distinct) <= 3 and all(captions.count(c) >= 2 for c in distinct):
+        return [{"label": c, "items": [i for i in items if i["description"] == c]} for c in distinct]
+    return []
+
+
 def render_piece(p: dict) -> None:
     """Fill p['parts'] with renderable blocks and p['searchText'] with plain text."""
     parts, texts = [], []
-    for link in p["links"]:
-        url = as_str(link.get("url"))
-        image = as_str(link.get("image"))
-        parts.append({
-            "kind": "link",
-            "url": url,
-            "title": as_str(link.get("title")) or url,
-            "description": as_str(link.get("description")),
-            "site": as_str(link.get("site")) or re.sub(r"^www\.", "", re.sub(r"^https?://([^/]+).*$", r"\1", url)),
-            "image": image if image.startswith("https://") else "",
-            "archive": as_str(link.get("archive")),
-        })
-        texts.append(" ".join([as_str(link.get("title")), as_str(link.get("description"))]))
     if p["body"]:
         body_html = markdown(p["body"], p["lineBreaks"])
         parts.append({"kind": "html", "html": body_html, "keepLines": p["lineBreaks"]})
         texts.append(strip_tags(body_html))
+    items = [link_item(l) for l in p["links"]]
+    texts += [" ".join([i["title"], i["description"]]) for i in items]
+    if len(items) == 1:
+        parts.append({"kind": "link", **items[0]})
+    elif items:
+        parts.append({"kind": "links", "items": items, "groups": group_links(items)})
+    p["linkItems"] = items
     for f in p["files"]:
         rel = as_str(f.get("path")).lstrip("/")
         src = PUBLIC / rel
@@ -557,8 +597,6 @@ def build() -> None:
     nav_sections = [s for s in sections.values() if s["visible"] and s["pieces"]]
 
     featured = sorted([p for p in public if p["featured"]], key=lambda p: (p["order"], tuple(-x for x in p["sortDate"])))
-    if not featured:
-        featured = public[:6]
     featured = featured[:6]
 
     commit = os.environ.get("CF_PAGES_COMMIT_SHA", "")
@@ -588,13 +626,22 @@ def build() -> None:
     for s in sections.values():
         if not s["pieces"]:
             continue
+        ps = s["pieces"]
         filters = {
-            "company": sorted({p["company"] for p in s["pieces"] if p["company"]}),
-            "type": sorted({p["type"] for p in s["pieces"] if p["type"]}),
-            "year": sorted({p["year"] for p in s["pieces"] if p["year"]}, reverse=True),
+            "place": sorted({p["place"] for p in ps if p["place"]}),
+            "type": sorted({p["type"] for p in ps if p["type"]}),
+            "company": sorted({p["company"] for p in ps if p["company"]}),
+            "year": sorted({p["year"] for p in ps if p["year"]}, reverse=True),
         }
-        show_filters = len(s["pieces"]) > 3 and any(len(v) > 1 for v in filters.values())
-        write(s["url"], "section.html", section=s, filters=filters, show_filters=show_filters)
+        seen = [t for p in ps for t in p["topics"]]
+        topics = sorted(dict.fromkeys(seen), key=lambda t: (-seen.count(t), seen.index(t)))
+        # Details every piece in the section shares are left out of its list (the heading already says them).
+        common = {k for k in ("type", "company") if len({p[k] for p in ps}) == 1}
+        show_filters = s["layout"] == "list" and len(ps) > 5 and (len(topics) > 1 or any(len(v) > 1 for v in filters.values()))
+        visible = [x for x in nav_sections]
+        nxt = visible[(visible.index(s) + 1) % len(visible)] if s in visible and len(visible) > 1 else None
+        write(s["url"], "section.html", section=s, filters=filters, topics=topics, show_filters=show_filters,
+              common=common, next_section=nxt)
 
     for p in pieces:
         first = sections.get(p["sections"][0]) if p["sections"] else None
@@ -612,7 +659,7 @@ def build() -> None:
     # Search index: public pieces only.
     index = [{
         "u": p["url"], "t": p["title"], "s": p["summary"], "ty": p["type"], "c": p["company"], "d": p["dateLabel"],
-        "sec": [sections[s]["title"] for s in p["sections"]], "tg": p["tags"],
+        "sec": [sections[s]["title"] for s in p["sections"]], "tg": p["tags"] + p["topics"] + ([p["place"]] if p["place"] else []),
         "x": p["searchText"][:6000],
     } for p in public]
     (DIST / "search-index.json").write_text(json.dumps(index, ensure_ascii=False), encoding="utf-8")

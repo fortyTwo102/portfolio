@@ -55,10 +55,16 @@ Optional settings, which you only need if something changes: `SITE_URL` if Cloud
 
 ## Using the admin view
 
-- **Add a piece:** go to **Pieces → Add a piece**. Give it a title and sections, then add the work: upload files (PDF, .docx, .md, .txt, up to 20 MB each), add a link, or paste the text. Fill in the specimen label (job, role, brief, result) and **Save**. Then select **Publish** at the top.
+- **Sections** (Travel blogs, Web pages, Campaigns, Tripshepherd, Agency websites, PR, Social) are the site's main menu and the tiles on the home page.
+  - Click a section to change its name, short menu name, label, introduction, home-page summary and button text.
+  - **Layout:** *List* shows one line per piece with topic filters, which suits blogs. *Cards* shows every piece in full, with its text and links, which suits campaigns and agency work.
+  - On the Sections list, untick a section to hide it from the home page, and use **Up** and **Down** to reorder.
+- **Add a piece:** go to **Pieces → Add a piece**. Give it a title, sections, a place and topics, then add the work: upload files (PDF, .docx, .md, .txt, up to 20 MB each), add one or more links, or paste the text. Save, then select **Publish** at the top.
+  - A piece with several links shows them as a list. Give each link a caption, such as the city, and links that share captions are grouped (Canada, USA).
+  - **Order:** numbered pieces are listed lowest number first. Pieces with no number come before them, newest first.
 - **Visibility:** *Public* pieces are listed everywhere. *Unlisted* pieces work only for people who have the link, and you can still pin them to a role page. *Draft* pieces stay off the site.
 - **Role pages:** go to **Role pages** for the link to put on each tailored CV, for example `ammara-younas.pages.dev/for/copywriter/`. You can pin samples there and attach the matching CV PDF.
-- **Profile:** the home-page introduction, results, contact details, About page and education.
+- **Profile:** the label above her name, headline, introduction, results (each line starts with its number, which is shown large), contact details including the phone number in the footer, About page and education.
 - If two people save the same thing at once, the second save is refused with a message to reload. Nothing is overwritten silently.
 
 ## Changing the password

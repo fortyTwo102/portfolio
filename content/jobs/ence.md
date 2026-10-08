@@ -1,6 +1,6 @@
 ---
 title: "Marketing Content Manager"
-company: "ENCE Marketing Group"
+company: "ENCE Marketing Group (now Presence Marketing Group)"
 shortName: "ENCE"
 location: "Singapore"
 type: "Freelance"

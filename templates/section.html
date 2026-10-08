@@ -1,35 +1,47 @@
 {% extends "base.html" %}
-{% from "_macros.html" import entries %}
+{% from "_macros.html" import entries, card %}
 {% block title %}{{ section.title }}: {{ site.name }}{% endblock %}
 {% block description %}{{ section.description or (section.title ~ ' by ' ~ site.name) }}{% endblock %}
 {% block main %}
 <header class="page-head">
+  {% if section.label %}<p class="kicker">{{ section.label }}</p>{% endif %}
   <h1>{{ section.title }}</h1>
-  {% if section.description %}<p class="lede">{{ section.description }}</p>{% endif %}
+  {% if section.intro %}<div class="lede">{{ section.intro|markdown|safe }}</div>{% endif %}
 </header>
 
 {% if show_filters %}
 <form class="filters" data-filters aria-label="Filter {{ section.title|lower }}">
-  {% if filters.company|length > 1 %}
-  <label>Company
-    <select name="company"><option value="">All</option>{% for v in filters.company %}<option>{{ v }}</option>{% endfor %}</select>
-  </label>
+  {% if topics|length > 1 %}
+  <div class="chips" role="group" aria-label="Topic">
+    <button type="button" data-topic="" aria-pressed="true">All</button>
+    {% for t in topics %}<button type="button" data-topic="{{ t }}" aria-pressed="false">{{ t }}</button>{% endfor %}
+  </div>
   {% endif %}
-  {% if filters.type|length > 1 %}
-  <label>Type
-    <select name="type"><option value="">All</option>{% for v in filters.type %}<option>{{ v }}</option>{% endfor %}</select>
-  </label>
-  {% endif %}
-  {% if filters.year|length > 1 %}
-  <label>Year
-    <select name="year"><option value="">All</option>{% for v in filters.year %}<option>{{ v }}</option>{% endfor %}</select>
-  </label>
-  {% endif %}
-  <p class="filter-count" aria-live="polite" data-count>{{ section.pieces|length }} pieces</p>
+  <div class="selects">
+    {% for key, label in [('place', 'Place'), ('type', 'Type'), ('company', 'Company'), ('year', 'Year')] %}
+    {% if filters[key]|length > 1 and key not in common %}
+    <label>{{ label }}
+      <select name="{{ key }}"><option value="">All</option>{% for v in filters[key] %}<option>{{ v }}</option>{% endfor %}</select>
+    </label>
+    {% endif %}
+    {% endfor %}
+    <p class="filter-count" aria-live="polite" data-count>{{ section.pieces|length }} pieces</p>
+  </div>
 </form>
 {% endif %}
 
-{{ entries(section.pieces, id='list') }}
+{% if section.layout == 'cards' %}
+<div class="cards">
+  {% for p in section.pieces %}{{ card(p, common) }}{% endfor %}
+</div>
+{% else %}
+{{ entries(section.pieces, id='list', hide=common) }}
 <p class="empty" data-empty hidden>Nothing matches those filters. <a href="{{ section.url }}">Show all {{ section.title|lower }}</a>.</p>
+{% if show_filters and section.pieces|length > 14 %}<button type="button" class="button button-quiet more" data-more hidden></button>{% endif %}
+{% endif %}
+
+{% if next_section %}
+<p class="next"><a href="{{ next_section.url }}">Next: {{ next_section.title }} <span aria-hidden="true">→</span></a></p>
+{% endif %}
 {% endblock %}
 {% block scripts %}{% if show_filters %}<script src="/assets/filters.js?v={{ asset_version }}" defer></script>{% endif %}{% endblock %}
